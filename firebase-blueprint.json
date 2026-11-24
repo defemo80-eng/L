@@ -1,0 +1,174 @@
+{
+  "entities": {
+    "Conversation": {
+      "title": "Conversation",
+      "description": "A user conversation session with DeiAI.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated owner UID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Conversation title."
+        },
+        "lastMessagePreview": {
+          "type": "string",
+          "description": "Short preview of the latest message."
+        },
+        "lastEmotion": {
+          "type": "string",
+          "enum": [
+            "ALEGRIA",
+            "TRISTEZA",
+            "ENOJO_DIVERTIDO",
+            "SORPRESA",
+            "CURIOSIDAD",
+            "ENTUSIASMO",
+            "TRANQUILIDAD"
+          ],
+          "description": "Latest simulated emotion of DeiAI in this conversation."
+        },
+        "messageCount": {
+          "type": "integer",
+          "description": "Total number of messages in the conversation."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the conversation was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last activity."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "lastMessagePreview",
+        "lastEmotion",
+        "messageCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A single message within a DeiAI conversation.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated owner UID."
+        },
+        "conversationId": {
+          "type": "string",
+          "description": "Parent conversation document ID."
+        },
+        "sender": {
+          "type": "string",
+          "enum": ["USER", "DEIAI"],
+          "description": "Message author role."
+        },
+        "text": {
+          "type": "string",
+          "description": "Message text content."
+        },
+        "emotion": {
+          "type": "string",
+          "enum": [
+            "ALEGRIA",
+            "TRISTEZA",
+            "ENOJO_DIVERTIDO",
+            "SORPRESA",
+            "CURIOSIDAD",
+            "ENTUSIASMO",
+            "TRANQUILIDAD"
+          ],
+          "description": "Simulated emotion associated with this message."
+        },
+        "actionTaken": {
+          "type": "string",
+          "description": "Optional summary of device action executed."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the message was sent."
+        }
+      },
+      "required": [
+        "userId",
+        "conversationId",
+        "sender",
+        "text",
+        "emotion",
+        "createdAt"
+      ]
+    },
+    "MemoryItem": {
+      "title": "MemoryItem",
+      "description": "An authorized personal memory remembered by DeiAI.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated owner UID."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["NOMBRE", "PREFERENCIA", "DATO", "INTERES"],
+          "description": "Category of the memory."
+        },
+        "key": {
+          "type": "string",
+          "description": "Memory label or topic."
+        },
+        "value": {
+          "type": "string",
+          "description": "Remembered detail."
+        },
+        "authorized": {
+          "type": "boolean",
+          "description": "Whether the user has authorized keeping this memory active."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the memory was saved."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the memory was last updated."
+        }
+      },
+      "required": [
+        "userId",
+        "category",
+        "key",
+        "value",
+        "authorized",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/conversations/{conversationId}": {
+      "schema": { "$ref": "#/entities/Conversation" },
+      "description": "User-scoped DeiAI conversation metadata."
+    },
+    "/users/{userId}/conversations/{conversationId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Messages belonging to a user's DeiAI conversation."
+    },
+    "/users/{userId}/memories/{memoryId}": {
+      "schema": { "$ref": "#/entities/MemoryItem" },
+      "description": "User-authorized personal memories used by DeiAI."
+    }
+  }
+}

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">DeiAI</string>
+    <string name="deiai_logo_desc">Logotipo oficial de DeiAI</string>
+    <string name="voice_service_channel_name">Escucha activa de DeiAI</string>
+    <string name="voice_service_channel_desc">Mantiene activa la detección de voz «Hola DeiAI» cuando está habilitada.</string>
+    <string name="voice_service_notif_title">DeiAI está escuchando</string>
+    <string name="voice_service_notif_text">Di «Hola DeiAI» para hablar con tu asistente.</string>
+    <string name="voice_service_pause">Pausar escucha</string>
+</resources>

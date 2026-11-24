@@ -1,0 +1,6 @@
+{
+  "name": "DeiAI",
+  "description": "Asistente virtual inteligente con personalidad, emociones simuladas, voz en español, memoria inteligente y Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

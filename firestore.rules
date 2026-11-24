@@ -1,0 +1,176 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidEmotion(emotion) {
+      return emotion in [
+        'ALEGRIA',
+        'TRISTEZA',
+        'ENOJO_DIVERTIDO',
+        'SORPRESA',
+        'CURIOSIDAD',
+        'ENTUSIASMO',
+        'TRANQUILIDAD'
+      ];
+    }
+
+    function isValidMemoryCategory(category) {
+      return category in ['NOMBRE', 'PREFERENCIA', 'DATO', 'INTERES'];
+    }
+
+    function isValidConversation(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.title is string &&
+             data.title.size() >= 1 &&
+             data.title.size() <= 120 &&
+             data.lastMessagePreview is string &&
+             data.lastMessagePreview.size() <= 300 &&
+             data.lastEmotion is string &&
+             isValidEmotion(data.lastEmotion) &&
+             data.messageCount is int &&
+             data.messageCount >= 0 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    function isValidChatMessage(data, userId, conversationId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.conversationId is string &&
+             data.conversationId == conversationId &&
+             data.sender in ['USER', 'DEIAI'] &&
+             data.text is string &&
+             data.text.size() >= 1 &&
+             data.text.size() <= 16000 &&
+             data.emotion is string &&
+             isValidEmotion(data.emotion) &&
+             (!('actionTaken' in data) || (data.actionTaken is string && data.actionTaken.size() <= 300)) &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time;
+    }
+
+    function isValidMemoryItem(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.category is string &&
+             isValidMemoryCategory(data.category) &&
+             data.key is string &&
+             data.key.size() >= 1 &&
+             data.key.size() <= 100 &&
+             data.value is string &&
+             data.value.size() >= 1 &&
+             data.value.size() <= 500 &&
+             data.authorized is bool &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    match /users/{userId} {
+      allow read, write: if false;
+
+      match /conversations/{conversationId} {
+        allow get: if isOwner(userId) && isValidId(conversationId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(conversationId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'title', 'lastMessagePreview', 'lastEmotion',
+                           'messageCount', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'title', 'lastMessagePreview', 'lastEmotion',
+                           'messageCount', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidConversation(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(conversationId) &&
+                         isValidConversation(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'lastMessagePreview', 'lastEmotion',
+                           'messageCount', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(conversationId);
+
+        match /messages/{messageId} {
+          allow get: if isOwner(userId) && isValidId(conversationId) && isValidId(messageId);
+          allow list: if isOwner(userId) && isValidId(conversationId);
+
+          allow create: if isOwner(userId) &&
+                           isValidId(conversationId) &&
+                           isValidId(messageId) &&
+                           incoming().keys().hasAll([
+                             'userId', 'conversationId', 'sender', 'text', 'emotion', 'createdAt'
+                           ]) &&
+                           incoming().keys().hasOnly([
+                             'userId', 'conversationId', 'sender', 'text', 'emotion', 'actionTaken', 'createdAt'
+                           ]) &&
+                           isValidChatMessage(incoming(), userId, conversationId);
+
+          allow update: if false;
+          allow delete: if isOwner(userId) && isValidId(conversationId) && isValidId(messageId);
+        }
+      }
+
+      match /memories/{memoryId} {
+        allow get: if isOwner(userId) && isValidId(memoryId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(memoryId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'category', 'key', 'value', 'authorized', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'category', 'key', 'value', 'authorized', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidMemoryItem(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(memoryId) &&
+                         isValidMemoryItem(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'category', 'key', 'value', 'authorized', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(memoryId);
+      }
+    }
+  }
+}

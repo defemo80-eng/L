@@ -1,11 +1,23 @@
-<div align="center">
+# DeiAI — Asistente Virtual Inteligente para Android
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Aplicación móvil nativa para Android desarrollada en **Kotlin** y **Jetpack Compose (Material 3)** con integración de **Gemini** mediante **Firebase AI Logic**, **Cloud Firestore**, **Google Sign-In**, reconocimiento/síntesis de voz en español y servicio en primer plano para activación por voz («Hola DeiAI»).
 
-  <h1>Built with AI Studio</h2>
+## Características principales
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- **Inteligencia Artificial (Gemini):** Conversaciones naturales en español con contexto, resolución de problemas, redacción, traducción y respuestas JSON estructuradas vía `Firebase.ai` (`gemini-3.8-flash`) protegido con **Firebase App Check**.
+- **Personalidad y Emociones Simuladas:** Avatar animado (`DeiAiAvatar`) que cambia su expresión y modulación de voz entre *Alegría*, *Tristeza*, *Enojo divertido*, *Sorpresa*, *Curiosidad*, *Entusiasmo* y *Tranquilidad*.
+- **Voz en Español y «Hola DeiAI»:** Reconocimiento de voz (`SpeechRecognizer`), lectura en voz alta (`TextToSpeech`) con selector de voces, velocidad, volumen, interrupción inmediata, modo de conversación continua y servicio `DeiAiVoiceService` en primer plano con notificación visible.
+- **Memoria Inteligente e Historial:** Persistencia aislada por usuario en Cloud Firestore (con caché local sin conexión) y preferencias locales con Jetpack DataStore.
+- **Acciones del Teléfono:** Consulta de hora/fecha, apertura de aplicaciones y ajustes, creación de alarmas/recordatorios y marcación telefónica previa confirmación explícita.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Compilación y pruebas
 
-</div>
+```bash
+# Compilar APK de depuración
+gradle :app:assembleDebug
+
+# Ejecutar pruebas unitarias y Robolectric
+gradle :app:testDebugUnitTest
+```
+
+El APK generado se guarda en `app/build/outputs/apk/debug/app-debug.apk`.
