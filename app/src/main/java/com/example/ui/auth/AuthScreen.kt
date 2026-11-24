@@ -91,8 +91,10 @@ fun attemptAutoSignIn(
         return
     }
     val clientId = try {
-        context.getString(R.string.default_web_client_id)
+        context.getString(R.string.default_web_client_id).takeIf { it.isNotBlank() }
     } catch (_: Exception) {
+        null
+    } ?: run {
         onUnauthenticated()
         return
     }
@@ -132,8 +134,10 @@ fun onGoogleSignInClicked(
     onAuthCancelled: () -> Unit = {}
 ) {
     val clientId = try {
-        context.getString(R.string.default_web_client_id)
+        context.getString(R.string.default_web_client_id).takeIf { it.isNotBlank() }
     } catch (_: Exception) {
+        null
+    } ?: run {
         onAuthError("Falta la configuración de Google Sign-In (default_web_client_id).")
         return
     }

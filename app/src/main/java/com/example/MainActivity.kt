@@ -64,9 +64,22 @@ import com.example.ui.viewmodel.DeiAiViewModel
 import com.example.voice.DeiAiVoiceService
 import com.example.voice.VoiceManager
 import com.google.firebase.Firebase
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 
 enum class DeiAiTab(
     val route: String,
@@ -121,6 +134,54 @@ private fun AppRoot(
     pendingWakeCommand: String?,
     onWakeCommandConsumed: () -> Unit
 ) {
+    val context = LocalContext.current
+    val isFirebaseReady = remember(context) {
+        FirebaseApp.getApps(context).isNotEmpty() || runCatching {
+            FirebaseApp.initializeApp(context) != null
+        }.getOrDefault(false)
+    }
+
+    if (!isFirebaseReady) {
+        DeiAiTheme(darkTheme = true) {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .safeDrawingPadding()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier.widthIn(max = 480.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Settings,
+                            contentDescription = "Configuración requerida",
+                            tint = ElectricCyan,
+                            modifier = Modifier.size(56.dp)
+                        )
+                        Text(
+                            text = "Configuración de Firebase pendiente",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Esta compilación se generó sin el archivo google-services.json. Agrega el secreto GOOGLE_SERVICES_JSON en GitHub Actions o instala el APK generado desde AI Studio para activar tu cuenta de Google, Firestore y Gemini AI.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+        return
+    }
+
     var currentUser by remember { mutableStateOf(Firebase.auth.currentUser) }
 
     DisposableEffect(Unit) {
