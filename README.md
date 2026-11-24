@@ -1,5 +1,7 @@
 # DeiAI — Asistente Virtual Inteligente para Android
 
+![Compilar APK de DeiAI](../../actions/workflows/android-build.yml/badge.svg)
+
 Aplicación móvil nativa para Android desarrollada en **Kotlin** y **Jetpack Compose (Material 3)** con integración de **Gemini** mediante **Firebase AI Logic**, **Cloud Firestore**, **Google Sign-In**, reconocimiento/síntesis de voz en español y servicio en primer plano para activación por voz («Hola DeiAI»).
 
 ## Características principales
@@ -10,7 +12,11 @@ Aplicación móvil nativa para Android desarrollada en **Kotlin** y **Jetpack Co
 - **Memoria Inteligente e Historial:** Persistencia aislada por usuario en Cloud Firestore (con caché local sin conexión) y preferencias locales con Jetpack DataStore.
 - **Acciones del Teléfono:** Consulta de hora/fecha, apertura de aplicaciones y ajustes, creación de alarmas/recordatorios y marcación telefónica previa confirmación explícita.
 
-## Compilación y pruebas
+## Descargar el APK desde GitHub Actions
+
+Al subir el proyecto a GitHub, el flujo **Compilar APK de DeiAI** en la pestaña **Acciones (Actions)** compila automáticamente la app y genera el artefacto descargable **`DeiAI-debug-apk`** (`app-debug.apk`).
+
+## Compilación y pruebas locales
 
 ```bash
 # Compilar APK de depuración
