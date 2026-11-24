@@ -12,6 +12,9 @@ jobs:
     name: Compilar y probar DeiAI
     runs-on: ubuntu-latest
 
+    env:
+      GRADLE_OPTS: "-Xmx3072m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8"
+
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
@@ -25,22 +28,38 @@ jobs:
       - name: Aceptar licencias e instalar Android SDK 36.1
         run: |
           SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          if [ -z "$SDK_ROOT" ]; then
+            SDK_ROOT="/usr/local/lib/android/sdk"
+          fi
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+
           SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
           if [ ! -x "$SDKMANAGER" ]; then
-            SDKMANAGER="$(command -v sdkmanager || true)"
+            SDKMANAGER="$(find "$SDK_ROOT" -name sdkmanager -type f 2>/dev/null | head -n 1 || true)"
           fi
-          if [ -n "$SDKMANAGER" ]; then
-            yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
-            "$SDKMANAGER" "platforms;android-36" "platforms;android-36.1" "build-tools;36.0.0" || true
-          fi
+          echo "Usando sdkmanager: $SDKMANAGER"
+          test -n "$SDKMANAGER"
+
+          set +o pipefail
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null 2>&1 || true
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" "platform-tools" "platforms;android-36" "platforms;android-36.1" "build-tools;36.0.0"
+          set -o pipefail
+
+          test -d "$SDK_ROOT/platforms/android-36.1"
+          ls -la "$SDK_ROOT/platforms"
 
       - name: Configurar Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 9.3.1
 
-      - name: Preparar debug.keystore
+      - name: Preparar debug.keystore y verificar archivos
         run: |
+          if [ ! -f app/google-services.json ]; then
+            echo "::error::Falta app/google-services.json en el repositorio de GitHub. Asegúrate de subir app/google-services.json desde AI Studio."
+            exit 1
+          fi
           if [ ! -f debug.keystore ]; then
             if [ -f debug.keystore.base64 ]; then
               base64 -d debug.keystore.base64 > debug.keystore
@@ -52,10 +71,22 @@ jobs:
           fi
 
       - name: Compilar APK de depuración
-        run: gradle :app:assembleDebug --no-daemon --stacktrace
+        run: |
+          gradle :app:assembleDebug \
+            --no-daemon \
+            --no-configuration-cache \
+            --stacktrace \
+            -Dorg.gradle.jvmargs="-Xmx3072m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8" \
+            -Dorg.gradle.workers.max=2
 
       - name: Ejecutar pruebas unitarias
-        run: gradle :app:testDebugUnitTest --no-daemon --stacktrace
+        run: |
+          gradle :app:testDebugUnitTest \
+            --no-daemon \
+            --no-configuration-cache \
+            --stacktrace \
+            -Dorg.gradle.jvmargs="-Xmx3072m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8" \
+            -Dorg.gradle.workers.max=2
 
       - name: Subir APK instalable como artefacto
         uses: actions/upload-artifact@v4

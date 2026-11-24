@@ -63,7 +63,23 @@ android {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      all { test ->
+        val localM2 = file("/home/appuser/.m2/repository")
+        if (localM2.exists()) {
+          test.systemProperty("robolectric.dependency.repo.url", localM2.toURI().toString())
+          test.systemProperty("robolectric.dependency.repo.id", "local")
+        } else {
+          test.systemProperty(
+            "robolectric.dependency.repo.url",
+            "https://maven-central.storage-download.googleapis.com/maven2"
+          )
+        }
+      }
+    }
+  }
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true
