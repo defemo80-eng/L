@@ -16,17 +16,19 @@ jobs:
       - name: Descargar código
         uses: actions/checkout@v4
 
-      - name: Configurar Java 17
+      - name: Configurar Java 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '21'
 
-      - name: Configurar Android SDK y aceptar licencias
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar Android SDK 36.1 y aceptar licencias
         run: |
-          if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
-            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
-          fi
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager "platforms;android-36" "platforms;android-36.1" "build-tools;36.0.0"
 
       - name: Configurar Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
@@ -45,11 +47,11 @@ jobs:
             fi
           fi
 
-      - name: Ejecutar pruebas unitarias
-        run: gradle :app:testDebugUnitTest
-
       - name: Compilar APK de depuración
-        run: gradle :app:assembleDebug
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Ejecutar pruebas unitarias
+        run: gradle :app:testDebugUnitTest --no-daemon --stacktrace
 
       - name: Subir APK instalable como artefacto
         uses: actions/upload-artifact@v4
