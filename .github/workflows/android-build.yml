@@ -55,9 +55,18 @@ jobs:
           gradle-version: 9.3.1
 
       - name: Preparar debug.keystore y verificar archivos
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
+          if [ ! -f app/google-services.json ] && [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            if printf '%s' "$GOOGLE_SERVICES_JSON" | grep -q '"project_info"'; then
+              printf '%s\n' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+            else
+              printf '%s' "$GOOGLE_SERVICES_JSON" | tr -d '[:space:]' | base64 -d > app/google-services.json
+            fi
+          fi
           if [ ! -f app/google-services.json ]; then
-            echo "::error::Falta app/google-services.json en el repositorio de GitHub. Asegúrate de subir app/google-services.json desde AI Studio."
+            echo "::error::Falta app/google-services.json porque AI Studio lo excluye al subir a GitHub. Crea el secreto GOOGLE_SERVICES_JSON en GitHub (Settings -> Secrets and variables -> Actions) con el contenido de app/google-services.json."
             exit 1
           fi
           if [ ! -f debug.keystore ]; then
